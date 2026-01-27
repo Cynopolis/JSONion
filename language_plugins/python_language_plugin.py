@@ -6,7 +6,6 @@ from .base_language_plugin import BaseLanguagePlugin
 
 class PythonLanguagePlugin(BaseLanguagePlugin):
     output_folder = "python"
-    output_filename = "commands.py"
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
@@ -14,7 +13,7 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
         s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
         return s2.lower()
 
-    def generate_code(self, data: Dict[str, Any]) -> str:
+    def generate_code(self, data: Dict[str, Any]) -> Dict[str, str]:
         lines = []
         lines.append("from dataclasses import dataclass")
         lines.append("from typing import Optional")
@@ -50,4 +49,4 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
 
             lines.append("")
 
-        return "\n".join(lines)
+        return {"commands.py": "\n".join(lines)}

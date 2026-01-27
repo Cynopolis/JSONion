@@ -9,26 +9,26 @@ class BaseLanguagePlugin(ABC):
     """
 
     output_folder: str
-    output_filename: str
 
     def generate(self, data: Dict[str, Any], build_root: Path) -> None:
         """
         Orchestrates generation:
         - creates language subfolder
         - calls generate_code()
-        - writes output file
+        - writes all output files
         """
         output_dir = build_root / self.output_folder
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        code = self.generate_code(data)
+        files_dict = self.generate_code(data)  # now a dict of filename -> text
 
-        output_file = output_dir / self.output_filename
-        output_file.write_text(code, encoding="utf-8")
+        for filename, content in files_dict.items():
+            file_path = output_dir / filename
+            file_path.write_text(content, encoding="utf-8")
 
     @abstractmethod
-    def generate_code(self, data: Dict[str, Any]) -> str:
+    def generate_code(self, data: Dict[str, Any]) -> Dict[str, str]:
         """
-        Generate the source code text for this language.
+        Generate a dictionary of filename -> file content for this language.
         """
         pass
