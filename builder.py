@@ -1,6 +1,16 @@
 import json
 import argparse
+import re
 from pathlib import Path
+
+
+def camel_to_snake(name: str) -> str:
+    """
+    Convert CamelCase / PascalCase to snake_case.
+    """
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
+    return s2.lower()
 
 
 def generate(source_path: Path, build_dir: Path):
@@ -35,10 +45,12 @@ def generate(source_path: Path, build_dir: Path):
         field_comments = about[1:]
 
         for idx, (field_name, field_type) in enumerate(fields):
+            python_name = camel_to_snake(field_name)
             comment = field_comments[idx] if idx < len(field_comments) else ""
+
             if comment:
                 lines.append(f"    # {comment}")
-            lines.append(f"    {field_name}: {field_type}")
+            lines.append(f"    {python_name}: {field_type}")
 
         lines.append("")
 
