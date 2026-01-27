@@ -37,8 +37,7 @@ def main():
     else:
         raise ValueError(f"Unsupported language: {args.language}")
 
-    language_output_dir = args.build / plugin.output_folder
-    plugin.generate(data, language_output_dir)
+    plugin.generate(data, args.build)
 
 
 if __name__ == "__main__":

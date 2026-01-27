@@ -1,12 +1,12 @@
 import re
-from pathlib import Path
 from typing import Dict, Any
+
 from .base_language_plugin import BaseLanguagePlugin
 
 
 class PythonLanguagePlugin(BaseLanguagePlugin):
     output_folder = "python"
-    OUTPUT_FILENAME = "commands.py"
+    output_filename = "commands.py"
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
@@ -14,10 +14,7 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
         s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
         return s2.lower()
 
-    def generate(self, data: Dict[str, Any], build_dir: Path) -> None:
-        build_dir.mkdir(parents=True, exist_ok=True)
-        output_file = build_dir / self.OUTPUT_FILENAME
-
+    def generate_code(self, data: Dict[str, Any]) -> str:
         lines = []
         lines.append("from dataclasses import dataclass")
         lines.append("from typing import Optional")
@@ -53,4 +50,4 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
 
             lines.append("")
 
-        output_file.write_text("\n".join(lines), encoding="utf-8")
+        return "\n".join(lines)
