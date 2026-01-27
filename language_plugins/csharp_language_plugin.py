@@ -24,7 +24,8 @@ class CSharpLanguagePlugin(BaseLanguagePlugin):
             # Class documentation
             if about:
                 lines.append("    /// <summary>")
-                lines.append(f"    /// {about[0]}")
+                for line in about[0].splitlines():
+                    lines.append(f"    /// {line}")
                 lines.append("    /// </summary>")
 
             lines.append(f"    public class {command_name}")

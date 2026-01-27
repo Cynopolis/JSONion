@@ -29,7 +29,10 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
 
             lines.append("@dataclass")
             lines.append(f"class {command_name}:")
-            lines.append(f'    """{class_doc}"""')
+            lines.append("    \"\"\"")
+            for line in class_doc.splitlines():
+                lines.append(f"    {line}")
+            lines.append("    \"\"\"")
 
             if not fields:
                 lines.append("    pass")
