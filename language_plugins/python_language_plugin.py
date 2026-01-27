@@ -1,6 +1,5 @@
 import re
 from typing import Dict, Any
-
 from .base_language_plugin import BaseLanguagePlugin
 
 
@@ -9,28 +8,18 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
-        """Convert CamelCase or CapitolCamelCase to snake_case"""
         s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
         s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
         return s2.lower()
 
     def generate_code(self, all_json_data: Dict[str, Dict[str, Any]]) -> Dict[str, str]:
-        """
-        Generate Python code for all JSON files.
-        Returns a dict mapping output filename -> file content.
-        """
         output_files = {}
-
         for source_filename, data in all_json_data.items():
             output_files[f"{source_filename}.py"] = self._generate_file_code(
                 data)
-
         return output_files
 
     def _generate_file_code(self, data: Dict[str, Any]) -> str:
-        """
-        Generate the Python code for a single JSON object (i.e., one file).
-        """
         lines = [
             "from dataclasses import dataclass",
             "from typing import Optional",
@@ -40,31 +29,34 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
         ]
 
         for command_name, command_body in data.items():
-            about = command_body.get("ABOUT", [])
+            about = command_body.get("ABOUT")
             fields = [(k, v) for k, v in command_body.items() if k != "ABOUT"]
 
-            # Class docstring
-            class_doc = about[0] if about else f"{command_name} command."
             lines.append("@dataclass")
-            lines.append(f"class {command_name}:")
-            lines.append("    \"\"\"")
-            for line in class_doc.splitlines():
-                lines.append(f"    {line}")
-            lines.append("    \"\"\"")
 
-            # Handle empty classes
+            lines.append(f"class {command_name}:")
+            lines.append('    """')
+
+            # Handle ABOUT string or list properly
+            if isinstance(about, str):
+                about_lines = about.splitlines()
+            else:
+                about_lines = about  # already a list
+
+            for line in about_lines:
+                lines.append(f"    {line.strip()}")
+
+            lines.append('    """')
+
             if not fields:
                 lines.append("    pass")
                 lines.append("")
                 continue
 
-            # Field comments start from index 1 in ABOUT
-            field_comments = about[1:]
-
-            for idx, (field_name, field_type) in enumerate(fields):
+            for field_name, field_info in fields:
                 python_name = self.camel_to_snake(field_name)
-                comment = field_comments[idx] if idx < len(
-                    field_comments) else ""
+                field_type = field_info["type"]
+                comment = field_info.get("comment", "")
 
                 if comment:
                     lines.append(f"    # {comment}")

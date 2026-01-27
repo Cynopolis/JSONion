@@ -42,19 +42,24 @@ class BaseLanguagePlugin(ABC):
 
     def _validate_about_sections(self, data: Dict[str, Any]) -> None:
         for command_name, command_body in data.items():
-            fields = [k for k in command_body.keys() if k != "ABOUT"]
             about = command_body.get("ABOUT")
-
             if about is None:
                 raise ValueError(
                     f"Command '{command_name}' is missing the ABOUT section.")
 
-            expected_entries = 1 + len(fields)
-            actual_entries = len(about)
-
-            if actual_entries != expected_entries:
-                raise ValueError(
-                    f"Command '{command_name}' has an incomplete ABOUT section: "
-                    f"expected {expected_entries} entries (1 class doc + {len(fields)} field(s)), "
-                    f"but found {actual_entries}."
-                )
+            # Validate each field
+            for field_name, field_info in command_body.items():
+                if field_name == "ABOUT":
+                    continue
+                if not isinstance(field_info, dict):
+                    raise ValueError(
+                        f"Field '{field_name}' in command '{command_name}' must be an object with 'type' and 'comment'."
+                    )
+                if "type" not in field_info:
+                    raise ValueError(
+                        f"Field '{field_name}' in command '{command_name}' is missing 'type'."
+                    )
+                if "comment" not in field_info:
+                    raise ValueError(
+                        f"Field '{field_name}' in command '{command_name}' is missing 'comment'."
+                    )
