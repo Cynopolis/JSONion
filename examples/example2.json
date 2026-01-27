@@ -1,0 +1,7 @@
+{
+    "ExampleCommand": {
+        "ABOUT": [
+            "This is just here to test how multi-file generation works"
+        ]
+    }
+}
