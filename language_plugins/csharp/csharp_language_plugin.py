@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from .base_language_plugin import BaseLanguagePlugin
+from language_plugins.base_language_plugin import BaseLanguagePlugin
 
 
 class CSharpLanguagePlugin(BaseLanguagePlugin):
