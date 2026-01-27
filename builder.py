@@ -2,7 +2,28 @@ import json
 import argparse
 from pathlib import Path
 
-from language_plugins.python_language_plugin import PythonLanguagePlugin
+import language_plugins
+from language_plugins.base_language_plugin import BaseLanguagePlugin
+
+
+def load_plugins() -> dict[str, type[BaseLanguagePlugin]]:
+    """
+    Load all language plugins listed in language_plugins.__all__.
+    Returns a dict mapping language name -> plugin class.
+    """
+    plugins = {}
+
+    for plugin_name in language_plugins.__all__:
+        plugin_cls = getattr(language_plugins, plugin_name)
+
+        if not issubclass(plugin_cls, BaseLanguagePlugin):
+            continue
+
+        # PythonLanguagePlugin -> python
+        language_key = plugin_name.replace("LanguagePlugin", "").lower()
+        plugins[language_key] = plugin_cls
+
+    return plugins
 
 
 def main():
@@ -23,8 +44,7 @@ def main():
     )
     parser.add_argument(
         "-l", "--language",
-        default="python",
-        help="Target language (default: python)"
+        help="Target language (default: generate all languages)"
     )
 
     args = parser.parse_args()
@@ -32,12 +52,26 @@ def main():
     with args.source.open("r", encoding="utf-8") as f:
         data = json.load(f)
 
-    if args.language == "python":
-        plugin = PythonLanguagePlugin()
-    else:
-        raise ValueError(f"Unsupported language: {args.language}")
+    plugins = load_plugins()
+    if not plugins:
+        raise RuntimeError("No language plugins registered.")
 
-    plugin.generate(data, args.build)
+    if args.language:
+        lang = args.language.lower()
+        if lang not in plugins:
+            raise ValueError(
+                f"Unsupported language '{args.language}'. "
+                f"Available languages: {', '.join(sorted(plugins.keys()))}"
+            )
+        selected_plugins = {lang: plugins[lang]}
+    else:
+        selected_plugins = plugins  # generate all languages
+
+    for lang, plugin_cls in selected_plugins.items():
+        print(f"Generating {lang}...")
+        plugin = plugin_cls()
+        plugin.generate(data, args.build)
+        print(f"{lang} generation complete.")
 
 
 if __name__ == "__main__":
