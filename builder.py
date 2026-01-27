@@ -32,13 +32,13 @@ def main():
     with args.source.open("r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # Plugin selection (simple and explicit for now)
     if args.language == "python":
         plugin = PythonLanguagePlugin()
     else:
         raise ValueError(f"Unsupported language: {args.language}")
 
-    plugin.generate(data, args.build)
+    language_output_dir = args.build / plugin.output_folder
+    plugin.generate(data, language_output_dir)
 
 
 if __name__ == "__main__":

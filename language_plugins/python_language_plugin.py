@@ -1,10 +1,11 @@
 import re
 from pathlib import Path
 from typing import Dict, Any
-from base_language_plugin import BaseLanguagePlugin
+from .base_language_plugin import BaseLanguagePlugin
 
 
 class PythonLanguagePlugin(BaseLanguagePlugin):
+    output_folder = "python"
     OUTPUT_FILENAME = "commands.py"
 
     @staticmethod
