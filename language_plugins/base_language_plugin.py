@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Any
 
+from .command_definitions import Command, CommandEntry, EntryType
+
 
 class BaseLanguagePlugin(ABC):
     """
@@ -25,20 +27,67 @@ class BaseLanguagePlugin(ABC):
         output_dir = build_root / self.output_folder
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        # parse the json files into a list of commands
+        parsed_json_data: Dict[str, list[Command]] = {}
+        for file_name, json_contents in all_json_data.items():
+            parsed_json_data[file_name] = self._convert_json_to_commands(
+                json_contents)
+
         # Plugin returns dict: {filename -> content}
-        files_dict = self.generate_code(all_json_data)
+        files_dict = self.generate_code(parsed_json_data)
 
         for filename, content in files_dict.items():
             file_path = output_dir / filename
             file_path.write_text(content, encoding="utf-8")
 
     @abstractmethod
-    def generate_code(self, all_json_data: Dict[str, Dict[str, Any]]) -> Dict[str, str]:
+    def generate_code(self, all_json_data: Dict[str, list[Command]]) -> Dict[str, str]:
         """
         Generate a dictionary of filename -> file content for this language.
         `all_json_data` is a dict of {source_filename: json_object}.
         """
         pass
+
+    def _convert_json_to_commands(self, single_json_file: Dict[str, Any]) -> list[Command]:
+        parsed_commands: list[Command] = []
+
+        for command_name, command_body in single_json_file.items():
+            about: str = command_body["ABOUT"]
+            entries: list[CommandEntry] = []
+
+            for field_name, field_info in command_body.items():
+                if field_name == "ABOUT":
+                    continue
+
+                type_str: str = field_info["type"]
+                comment: str = field_info["comment"]
+                optional: bool = field_info.get("optional", False)
+
+                try:
+                    entry_type = EntryType(type_str)
+                except ValueError:
+                    raise ValueError(
+                        f"Unknown type '{type_str}' in command '{command_name}', field '{field_name}'."
+                    )
+
+                entries.append(
+                    CommandEntry(
+                        name=field_name,
+                        type=entry_type,
+                        comment=comment,
+                        optional=optional,
+                    )
+                )
+
+            parsed_commands.append(
+                Command(
+                    name=command_name,
+                    about=about,
+                    entries=entries,
+                )
+            )
+
+        return parsed_commands
 
     def _validate_about_sections(self, data: Dict[str, Any]) -> None:
         for command_name, command_body in data.items():

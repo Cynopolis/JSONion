@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 from typing import Dict, Any
 from language_plugins.base_language_plugin import BaseLanguagePlugin
+from language_plugins.command_definitions import Command, CommandEntry, EntryType
 
 
 class PythonLanguagePlugin(BaseLanguagePlugin):
@@ -13,7 +14,7 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
         s2 = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1)
         return s2.lower()
 
-    def generate_code(self, all_json_data: Dict[str, Dict[str, Any]]) -> Dict[str, str]:
+    def generate_code(self, all_json_data: Dict[str, list[Command]]) -> Dict[str, str]:
         """
         Generate a dictionary of filename -> file content.
         Each JSON source file becomes its own .py file.
@@ -31,7 +32,7 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
 
         return output_files
 
-    def _generate_file_code(self, data: Dict[str, Any]) -> str:
+    def _generate_file_code(self, commands: list[Command]) -> str:
         lines = [
             "from dataclasses import dataclass",
             "from typing import Optional",
@@ -41,42 +42,38 @@ class PythonLanguagePlugin(BaseLanguagePlugin):
             "",
         ]
 
-        for command_name, command_body in data.items():
-            about = command_body.get("ABOUT")
-            fields_info = [(k, v)
-                           for k, v in command_body.items() if k != "ABOUT"]
-
+        for command in commands:
             lines.append("@dataclass")
-            # inherit from Command
-            lines.append(f"class {command_name}(Command):")
+            lines.append(f"class {command.name}(Command):")
             lines.append('    """')
 
-            # Handle ABOUT string or list properly
-            if isinstance(about, str):
-                about_lines = about.splitlines()
-            elif isinstance(about, list):
-                about_lines = about
-            else:
-                about_lines = [f"{command_name} command."]
-
-            for line in about_lines:
+            for line in command.about.splitlines():
                 lines.append(f"    {line.strip()}")
 
             lines.append('    """')
 
-            if not fields_info:
+            if not command.entries:
                 lines.append("    pass")
                 lines.append("")
                 continue
 
-            for field_name, field_info in fields_info:
-                python_name = self.camel_to_snake(field_name)
-                field_type = field_info["type"]
-                comment = field_info.get("comment", "")
+            for entry in command.entries:
+                python_name = self.camel_to_snake(entry.name)
 
-                if comment:
-                    lines.append(f"    # {comment}")
-                lines.append(f"    {python_name}: {field_type}")
+                py_type = {
+                    EntryType.STRING: "str",
+                    EntryType.INT: "int",
+                    EntryType.FLOAT: "float",
+                    EntryType.BOOL: "bool",
+                }[entry.type]
+
+                if entry.optional:
+                    py_type = f"Optional[{py_type}]"
+
+                if entry.comment:
+                    lines.append(f"    # {entry.comment}")
+
+                lines.append(f"    {python_name}: {py_type}")
 
             lines.append("")
 
