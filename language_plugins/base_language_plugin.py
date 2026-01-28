@@ -1,16 +1,19 @@
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Any
+import shutil
 
+from .base_snippets import Snippets
 from .command_definitions import Command, CommandEntry, EntryType
 
 
-class BaseLanguagePlugin(ABC):
+class BaseLanguagePlugin:
     """
     Abstract base class for language generators.
     """
-
     output_folder: str
+    file_ending: str
+    static_file_path: str
+    snippets: Snippets
 
     def generate(self, all_json_data: Dict[str, Dict[str, Any]], build_root: Path) -> None:
         """
@@ -34,19 +37,51 @@ class BaseLanguagePlugin(ABC):
                 json_contents)
 
         # Plugin returns dict: {filename -> content}
-        files_dict = self.generate_code(parsed_json_data)
+        files_dict = self._generate_code(parsed_json_data)
 
         for filename, content in files_dict.items():
             file_path = output_dir / filename
             file_path.write_text(content, encoding="utf-8")
 
-    @abstractmethod
-    def generate_code(self, all_json_data: Dict[str, list[Command]]) -> Dict[str, str]:
+        self._copy_static_files(self.static_file_path, output_dir)
+
+    def _generate_code(self, all_json_data: Dict[str, list[Command]]) -> Dict[str, str]:
         """
         Generate a dictionary of filename -> file content for this language.
         `all_json_data` is a dict of {source_filename: json_object}.
         """
-        pass
+        output_files = {}
+
+        # Generate code per JSON source file
+        for source_filename, commands in all_json_data.items():
+            output_files[f"{source_filename}.{self.file_ending}"] = self.snippets.get_file_snippet(
+                commands)
+
+        return output_files
+
+    def _copy_static_files(self, static_file_dir: str, output_dir: str) -> None:
+        src = Path(static_file_dir)
+        dst = Path(output_dir)
+
+        if not src.exists():
+            raise FileNotFoundError(
+                f"Static file directory does not exist: {src}")
+
+        if not src.is_dir():
+            raise NotADirectoryError(
+                f"Static file path is not a directory: {src}")
+
+        dst.mkdir(parents=True, exist_ok=True)
+
+        for item in src.iterdir():
+            target = dst / item.name
+
+            if item.is_dir():
+                # Copy directory tree (merge into existing directory)
+                shutil.copytree(item, target, dirs_exist_ok=True)
+            else:
+                # Copy file, overwrite if it exists
+                shutil.copy2(item, target)
 
     def _convert_json_to_commands(self, single_json_file: Dict[str, Any]) -> list[Command]:
         parsed_commands: list[Command] = []
