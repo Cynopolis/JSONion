@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "builder.py",
             "console": "integratedTerminal",
-            "args": ["-s", "examples/", "-b", "build/"]
+            "args": ["-s", "examples/", "-b", "build/", "-l", "python"]
         }
     ]
 }
