@@ -1,26 +1,33 @@
 {
     "ExampleCommand": {
-        "ABOUT": "The ABOUT field is requied in all commands and should describe that command and its fields.\nIt's written as an array to let you comment each argument in the command.",
+        "ABOUT": "The ABOUT field is required in all commands and should describe that command and its fields.",
+
         "SomeMessage": {
             "type": "str",
+            "optional": false,
             "comment": "This comment is for the SomeMessage variable. The SomeMessage variable is an example of a string"
         },
+
         "Count": {
             "type": "int",
+            "optional": false,
             "comment": "This comment is for the Count variable which is an example of an int"
         },
+
         "SomeBooleanExample": {
             "type": "bool",
+            "optional": false,
             "comment": "This comment is for the SomeBooleanExample"
         },
+
         "CouldBeNothing": {
-            "type": "Optional[str]",
-            "comment": "This comment is for the CouldBeNothing. This is an example of an optional parameter. In this case it could be a string, or null."
+            "type": "str",
+            "optional": true,
+            "comment": "This comment is for the CouldBeNothing. This is an example of an optional parameter."
         }
     },
+
     "AnotherExampleCommand": {
-        "ABOUT": [
-            "This command just shows you how to put a second command into the generator json"
-        ]
+        "ABOUT": "This command just shows you how to put a second command into the generator json"
     }
 }
