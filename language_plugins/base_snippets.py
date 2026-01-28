@@ -44,11 +44,11 @@ class Snippets(ABC):
         pass
 
     @abstractmethod
-    def get_class_snippet(self, command: Command) -> list[str]:
+    def get_about_snippet(self, command: Command) -> list[str]:
         pass
 
     @abstractmethod
-    def get_about_snippet(self, command: Command) -> list[str]:
+    def get_class_snippet(self, command: Command) -> list[str]:
         pass
 
     @abstractmethod
