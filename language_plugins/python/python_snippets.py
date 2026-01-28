@@ -10,14 +10,14 @@ class PythonSnippets(Snippets):
         for command in commands:
             lines.extend(self.get_command_snippet(command))
 
-        return "\n".join(lines)
+        return super().snippet_to_str(lines)
 
     def get_command_snippet(self, command: Command) -> list[str]:
-        lines = self.get_class_snippet(command.name)
+        lines = self.get_class_snippet(command)
         lines.extend(super().indent_snippet(
-            self.get_about_snippet(command.about), 1))
+            self.get_about_snippet(command), 1))
         lines.extend(super().indent_snippet(
-            self.get_entries_snippet(command.entries), 1))
+            self.get_entries_snippet(command), 1))
         lines.append("\n")
         return lines
 
@@ -32,29 +32,29 @@ class PythonSnippets(Snippets):
         ]
         return lines
 
-    def get_class_snippet(self, command_name: str) -> list[str]:
-        lines = []
-        lines.append("@dataclass")
-        lines.append(f"class {command_name}(Command):")
-
-        return lines
-
-    def get_about_snippet(self, about: str) -> list[str]:
+    def get_about_snippet(self, command: Command) -> list[str]:
         lines = []
         lines.append('"""')
 
-        for line in about.splitlines():
+        for line in command.about.splitlines():
             lines.append(f"{line.strip()}")
 
         lines.append('"""')
         return lines
 
-    def get_entries_snippet(self, entries: list[CommandEntry]) -> list[str]:
-        if not entries:
+    def get_class_snippet(self, command: Command) -> list[str]:
+        lines = [
+            "@dataclass",
+            f"class {command.name}(Command):"
+        ]
+        return lines
+
+    def get_entries_snippet(self, command: Command) -> list[str]:
+        if not command.entries:
             return ["pass"]
 
         lines = []
-        for entry in entries:
+        for entry in command.entries:
             lines.extend(self.get_entry_snippet(entry))
         return lines
 
