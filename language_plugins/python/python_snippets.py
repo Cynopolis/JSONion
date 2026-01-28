@@ -13,13 +13,11 @@ class PythonSnippets(Snippets):
         return "\n".join(lines)
 
     def get_command_snippet(self, command: Command) -> list[str]:
-        lines = self.get_class_snippet(command)
+        lines = self.get_class_snippet(command.name)
         lines.extend(super().indent_snippet(
-            self.get_about_snippet(command.about)))
+            self.get_about_snippet(command.about), 1))
         lines.extend(super().indent_snippet(
-            self.get_no_entries_snippet(command.entries)))
-        for entry in command.entries:
-            lines.extend(super().indent_snippet(self.get_entry_snippet(entry)))
+            self.get_entries_snippet(command.entries), 1))
         lines.append("\n")
         return lines
 
@@ -34,10 +32,10 @@ class PythonSnippets(Snippets):
         ]
         return lines
 
-    def get_class_snippet(self, command: Command) -> list[str]:
+    def get_class_snippet(self, command_name: str) -> list[str]:
         lines = []
         lines.append("@dataclass")
-        lines.append(f"class {command.name}(Command):")
+        lines.append(f"class {command_name}(Command):")
 
         return lines
 
@@ -51,10 +49,14 @@ class PythonSnippets(Snippets):
         lines.append('"""')
         return lines
 
-    def get_no_entries_snippet(self, entries: list[CommandEntry]) -> list[str]:
+    def get_entries_snippet(self, entries: list[CommandEntry]) -> list[str]:
         if not entries:
             return ["pass"]
-        return []
+
+        lines = []
+        for entry in entries:
+            lines.extend(self.get_entry_snippet(entry))
+        return lines
 
     def get_entry_snippet(self, entry: CommandEntry) -> list[str]:
         python_name = self.camel_to_snake(entry.name)
