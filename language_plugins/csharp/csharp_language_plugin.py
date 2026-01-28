@@ -1,71 +1,61 @@
-from typing import Dict, Any
+from typing import Dict, List
 from pathlib import Path
 from language_plugins.base_language_plugin import BaseLanguagePlugin
+from language_plugins.command_definitions import Command, CommandEntry, EntryType
 
 
 class CSharpLanguagePlugin(BaseLanguagePlugin):
     output_folder = "csharp"
 
-    def generate_code(self, all_json_data: Dict[str, Dict[str, Any]]) -> Dict[str, str]:
+    def generate_code(self, all_json_data: Dict[str, List[Command]]) -> Dict[str, str]:
         """
         Generate a dict of filename -> file content for all JSON files.
         Includes a copy of BaseCommand.cs.
         """
-        output_files = {}
+        output_files: Dict[str, str] = {}
 
-        # Include BaseCommand.cs by reading it from the plugin folder
+        # Include BaseCommand.cs
         output_files["BaseCommand.cs"] = self._get_base_command_code()
 
-        # Generate each source file
-        for source_filename, data in all_json_data.items():
+        for source_filename, commands in all_json_data.items():
             output_files[f"{source_filename}.cs"] = self._generate_file_code(
-                data)
+                commands)
 
         return output_files
 
-    def _generate_file_code(self, data: Dict[str, Any]) -> str:
+    def _generate_file_code(self, commands: List[Command]) -> str:
         lines = [
             "// Auto-generated file. Do not edit manually.",
             "using System;",
-            "using System.Text.Json;",
-            "using System.Text.Json.Serialization;",
-            "using System.Text.RegularExpressions;",
             "",
             "namespace GeneratedCommands",
             "{",
         ]
 
-        for command_name, command_body in data.items():
-            about = command_body.get("ABOUT")
-            fields = [(k, v) for k, v in command_body.items() if k != "ABOUT"]
-
-            # Class doc
-            if about:
+        for command in commands:
+            # XML doc comment
+            if command.about:
                 lines.append("    /// <summary>")
-                if isinstance(about, str):
-                    about_lines = about.splitlines()
-                else:
-                    about_lines = about
-                for line in about_lines:
+                for line in command.about.splitlines():
                     lines.append(f"    /// {line.strip()}")
                 lines.append("    /// </summary>")
 
-            # Inherit from Command
-            lines.append(f"    public class {command_name} : Command")
+            lines.append(f"    public class {command.name} : Command")
             lines.append("    {")
 
-            if not fields:
+            if not command.entries:
                 lines.append("        // No fields defined")
             else:
-                for field_name, field_info in fields:
-                    comment = field_info.get("comment", "")
-                    prop_name = self.to_pascal_case(field_name)
-                    cs_type = self.map_type(field_info["type"])
+                for entry in command.entries:
+                    prop_name = self.to_pascal_case(entry.name)
+                    cs_type = self.map_type(entry)
 
-                    if comment:
-                        lines.append(f"        // {comment}")
+                    if entry.comment:
+                        lines.append(f"        // {entry.comment}")
+
                     lines.append(
-                        f"        public {cs_type} {prop_name} {{ get; set; }}")
+                        f"        public {cs_type} {prop_name} {{ get; set; }}"
+                    )
 
             lines.append("    }")
             lines.append("")
@@ -78,34 +68,27 @@ class CSharpLanguagePlugin(BaseLanguagePlugin):
         base_file = Path(__file__).parent / "BaseCommand.cs"
         if not base_file.exists():
             raise FileNotFoundError(
-                f"Cannot find BaseCommand.cs at {base_file}")
+                f"Cannot find BaseCommand.cs at {base_file}"
+            )
         return base_file.read_text(encoding="utf-8")
 
     @staticmethod
     def to_pascal_case(name: str) -> str:
         if "_" in name:
-            parts = name.split("_")
-            return "".join(part.capitalize() for part in parts)
-        else:
-            return name[0].upper() + name[1:]
+            return "".join(part.capitalize() for part in name.split("_"))
+        return name[0].upper() + name[1:]
 
     @staticmethod
-    def map_type(json_type: str) -> str:
-        if json_type == "str":
-            return "string"
-        elif json_type == "int":
-            return "int"
-        elif json_type == "bool":
-            return "bool"
-        elif json_type.startswith("Optional["):
-            inner = json_type[len("Optional["):-1]
-            if inner == "str":
-                return "string?"
-            elif inner == "int":
-                return "int?"
-            elif inner == "bool":
-                return "bool?"
-            else:
-                return f"{inner}?"
-        else:
-            return json_type
+    def map_type(entry: CommandEntry) -> str:
+        base_type = {
+            EntryType.STRING: "string",
+            EntryType.INT: "int",
+            EntryType.FLOAT: "float",
+            EntryType.BOOL: "bool",
+        }[entry.type]
+
+        # Nullable reference / value types
+        if entry.optional:
+            return f"{base_type}?"
+
+        return base_type
