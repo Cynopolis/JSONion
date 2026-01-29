@@ -27,9 +27,6 @@ class BaseLanguagePlugin:
         for filename, data in all_json_data.items():
             self._validate_about_sections(data)
 
-        output_dir = build_root / self.output_folder
-        output_dir.mkdir(parents=True, exist_ok=True)
-
         # parse the json files into a list of commands
         parsed_json_data: Dict[str, list[Command]] = {}
         for file_name, json_contents in all_json_data.items():
@@ -39,10 +36,19 @@ class BaseLanguagePlugin:
         # Plugin returns dict: {filename -> content}
         files_dict = self._generate_code(parsed_json_data)
 
+        # delete any existing build folder
+        output_dir = build_root / self.output_folder
+        self._remove_existing_build_folder(output_dir)
+
+        # remake the build folder
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # save the new files to the build folder
         for filename, content in files_dict.items():
             file_path = output_dir / filename
             file_path.write_text(content, encoding="utf-8")
 
+        # copy any static files from the static folder into the build folder
         self._copy_static_files(self.static_file_path, output_dir)
 
     def _generate_code(self, all_json_data: Dict[str, list[Command]]) -> Dict[str, str]:
@@ -58,6 +64,20 @@ class BaseLanguagePlugin:
                 commands)
 
         return output_files
+
+    def _remove_existing_build_folder(self, build_dir: str) -> None:
+        path = Path(build_dir)
+
+        if not path.exists() or not path.is_dir():
+            return
+
+        try:
+            # Recursively remove the directory and all its contents
+            shutil.rmtree(path)
+            print(
+                f"'{path}' has been deleted.")
+        except OSError as e:
+            print(f"Error: {path} : {e.strerror}")
 
     def _copy_static_files(self, static_file_dir: str, output_dir: str) -> None:
         src = Path(static_file_dir)

@@ -1,4 +1,5 @@
 All variables should be UpperCamelCase
 
 TODO: Add unit tests
-TODO: Add C++ plugin
+TODO: Verify C++ plugin works as expected
+TODO: Write unit tests
