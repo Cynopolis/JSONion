@@ -1,0 +1,12 @@
+{
+    "ExampleCommand": {
+        "ABOUT": "This is a test command.",
+        "SomeMessage": {"type": "str", "comment": "Example message"},
+        "Count": {"type": "int", "comment": "Example count"},
+        "SomeBooleanExample": {"type": "bool", "comment": "Example bool"},
+        "CouldBeNothing": {"type": "str", "comment": "Optional string", "optional": true}
+    },
+    "AnotherExampleCommand": {
+        "ABOUT": "This command just shows another example."
+    }
+}

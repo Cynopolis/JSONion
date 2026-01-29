@@ -7,6 +7,6 @@ from .javascript_snippets import JavascriptSnippets
 
 class JavaScriptLanguagePlugin(BaseLanguagePlugin):
     output_folder = "javascript"
-    file_ending = ".js"
+    file_ending = "js"
     static_file_path = Path(__file__).parent / "static_files"
     snippets: Snippets = JavascriptSnippets()

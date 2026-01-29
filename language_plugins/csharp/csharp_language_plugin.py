@@ -7,6 +7,6 @@ from .csharp_snippets import CSharpSnippet
 
 class CSharpLanguagePlugin(BaseLanguagePlugin):
     output_folder = "csharp"
-    file_ending = ".cs"
+    file_ending = "cs"
     static_file_path = Path(__file__).parent / "static_files"
     snippets: Snippets = CSharpSnippet()
