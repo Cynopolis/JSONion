@@ -25,9 +25,7 @@ public:
   /**
    * @brief Construct a command and initialize CommandName
    */
-  Command()
-      : CommandName(
-            convert_to_snake_case(demangle_type_name(typeid(*this).name()))) {}
+  Command() : CommandName(demangle_type_name(typeid(*this).name())) {}
 
   virtual ~Command() = default;
 
@@ -51,23 +49,6 @@ public:
   }
 
 protected:
-  /**
-   * @brief Convert PascalCase to snake_case
-   */
-  static std::string convert_to_snake_case(const std::string &name) {
-    std::string s1 =
-        std::regex_replace(name, std::regex("(.)([A-Z][a-z]+)"), "$1_$2");
-    std::string s2 =
-        std::regex_replace(s1, std::regex("([a-z0-9])([A-Z])"), "$1_$2");
-
-    std::string result;
-    result.reserve(s2.size());
-    for (char c : s2)
-      result.push_back(static_cast<char>(std::tolower(c)));
-
-    return result;
-  }
-
   /**
    * @brief Strip compiler-specific type decorations
    *
